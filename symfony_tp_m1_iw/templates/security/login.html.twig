@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Se connecter{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .connect_box {
+            max-width: 500px;
+            text-align: center;
+            margin-top: 10em;
+        }
+
+        .form {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1em;
+        }
+
+        .grid_final {
+            grid-column-start: 1;
+            grid-column-end: 3;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+    <div class="box connect_box">
+        <h1 class="title">Veuillez vous connecter</h1>
+        <div class="box_body">
+            <div>
+                <img alt="key icon">
+                <p>Entrez vos informations de connexion.</p>
+            </div>
+            <form method="post" class="form">
+                <label for="username">Courriel</label>
+                <input type="email" value="{{ last_username }}" name="_username" id="username" class="form-control" autocomplete="email" required autofocus>
+                <label for="password">Mot de passe</label>
+                <input type="password" name="_password" id="password" class="form-control" autocomplete="current-password" required>
+
+                <input type="hidden" name="_csrf_token"
+                       value="{{ csrf_token('authenticate') }}"
+                >
+
+                {% if error %}
+                    <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                {% endif %}
+
+                {#
+                Uncomment this section and add a remember_me option below your firewall to activate remember me functionality.
+                See https://symfony.com/doc/current/security/remember_me.html
+
+                <div class="checkbox mb-3">
+                    <input type="checkbox" name="_remember_me" id="_remember_me">
+                    <label for="_remember_me">Remember me</label>
+                </div>
+                #}
+
+                <button class="btn grid_final" type="submit">
+                    Se connecter
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+{% endblock %}

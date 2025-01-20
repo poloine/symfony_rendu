@@ -1,0 +1,153 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Drive de {{ app.user.firstname }}{% endblock %}
+
+{% macro bytesToSize(bytes) %}
+    {% apply spaceless %}
+        {% set kilobyte = 1024 %}
+        {% set megabyte = kilobyte * 1024 %}
+        {% set gigabyte = megabyte * 1024 %}
+        {% set terabyte = gigabyte * 1024 %}
+
+        {% if bytes < kilobyte %}
+            {{ bytes ~ ' octets' }}
+        {% elseif bytes < megabyte %}
+            {{ (bytes / kilobyte)|number_format(2, '.') ~ ' Ko' }}
+        {% elseif bytes < gigabyte %}
+            {{ (bytes / megabyte)|number_format(2, '.') ~ ' Mo' }}
+        {% elseif bytes < terabyte %}
+            {{ (bytes / gigabyte)|number_format(2, '.') ~ ' Go' }}
+        {% else %}
+            {{ (bytes / terabyte)|number_format(2, '.') ~ ' To' }}
+        {% endif %}
+    {% endapply %}
+{% endmacro %}
+
+{% block stylesheets %}
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+
+        th, td {
+            min-width: 4px;
+            border-top: 1px solid #d7d7d7;
+            padding: 0 1em;
+            line-height: 1em;
+        }
+
+        .box_actions {
+            display: flex;
+            justify-content: space-between;
+            min-width: 85em;
+        }
+
+        .form {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .form label, .form input {
+            min-width: 95%;
+            margin: 0.2em 0;
+        }
+        .actions_drive {
+            width: 80%;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="box" id="box_drive">
+        <h1 class="title">Bienvenue sur votre espace de stockage, {{ app.user.firstname }}</h1>
+        <div class="box_actions">
+            <div class="actions_drive">
+                {% if currentPath %}
+                    <a class="btn" id="btn_return" href="{{ path('app_drive', {'subPath': currentPath|split('/')|slice(0, -1)|join('/')}) }}"><span class="btn_text">🖘 Retour</span></a>
+                {% else %}
+                    <button disabled class="btn" id="btn_return"><span class="btn_text">🖘 Retour</span></button>
+                {% endif %}
+                <button class="btn" id="btn_add_folder"><span class="btn_text">🗁 Nouveau dossier</span></button>
+                <button class="btn" id="btn_add_file"><span class="btn_text">🗎 Nouveau fichier</span></button>
+            </div>
+            <a class="btn" href="{{ path('_logout_main') }}"><span class="btn_text">🗵 Déconnexion</span></a>
+        </div>
+        <div class="box_content">
+            <table id="table_drive">
+                <thead>
+                    <tr>
+                       <th scope="col"></th>
+                       <th scope="col">Nom</th>
+                       <th scope="col">Taille</th>
+                       <th scope="col">Créé le</th>
+                       <th scope="col">Modifié le</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for file in files %}
+                    <tr>
+                        <td><input type="checkbox"></td>
+                        {% if file.type == "dir" %}
+                            <td>
+                                <a href="{{ path('app_drive', {'subPath': currentPath ? (currentPath ~ '/' ~ file.getRelativePathname()) : file.getRelativePathname()}) }}">
+                                    🗁 {{ file.getFilename() }}
+                                </a>
+                            </td>
+                            <td></td>
+                        {% else %}
+                            <td>🗎 {{ file.filename }}</td>
+                            <td>{{ _self.bytesToSize(file.size) }}</td>
+                        {% endif %}
+                        <td>{{ file.cTime | date("d/m/Y à H:i") }}</td>
+                        <td>{{ file.mTime | date("d/m/Y à H:i") }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p>Espace disponible :</p>
+        <div class="user_remaining_space">{{ _self.bytesToSize(remaining_space) }}</div>
+    </div>
+    <div id="add_folder_popup" class="popup box" style="display: none">
+        <h3 class="title">Ajouter un dossier...</h3>
+        <form class="form" action="{{ path(currentPath ? 'app_drive_add_folder' : 'app_drive_add_folder_root', currentPath ? {'subPath': currentPath} : {}) }}" method="post">
+            <input type="hidden" name="subPath" value="{{ currentPath }}">
+            <label for="input_folder_name">Donnez un nom à votre dossier :</label>
+            <input type="text" name="folder_name" id="input_folder_name" required>
+            <button class="btn" type="button" id="btn_add_folder_cancel"><span class="btn_text">Annuler</span></button>
+            <button class="btn" type="submit"><span class="btn_text">Confirmer</span></button>
+        </form>
+    </div>
+    <div id="add_file_popup" class="popup box" style="display: none">
+        <h3 class="title">Uploader un fichier...</h3>
+        <form class="form" action="{{ path(currentPath ? 'app_drive_upload_file_path' : 'app_drive_upload_file', currentPath ? {'subPath': currentPath} : {}) }}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="subPath" value="{{ currentPath }}">
+            <label for="input_file">Sélectionnez un fichier :</label>
+            <input type="file" name="file" id="input_file" required>
+            <button class="btn" type="button" id="btn_add_file_cancel"><span class="btn_text">Annuler</span></button>
+            <button class="btn" type="submit"><span class="btn_text">Confirmer</span></button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block endscripts %}
+    <script>
+        document.getElementById('btn_add_folder').addEventListener('click', function () {
+            document.getElementById('add_folder_popup').style.display = 'block';
+        });
+
+        document.getElementById('btn_add_folder_cancel').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('add_folder_popup').style.display = 'none';
+        });
+
+        document.getElementById('btn_add_file').addEventListener('click', function () {
+            document.getElementById('add_file_popup').style.display = 'block';
+        });
+
+        document.getElementById('btn_add_file_cancel').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('add_file_popup').style.display = 'none';
+        });
+    </script>
+{% endblock %}

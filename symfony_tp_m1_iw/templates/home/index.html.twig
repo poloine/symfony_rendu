@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Welcome to the drive{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .connect_box {
+            max-width: 500px;
+            text-align: center;
+            margin-top: 10em;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="box connect_box">
+        <h1 class="title">Bienvenue sur le <strong>drive</strong></h1>
+        <div class="box_body">
+            <p>Stocker vos fichiers avec la technologie <strong>drive</strong>, disponible à tout moment sur le world wide web. Envoyez et récupérez vos dossiers, fichiers, documents, photos et vidéos en quelques clics.</p>
+            <a class="btn" href="{{ path('app_drive') }}"><span class="btn_text">Accéder à votre espace</span></a>
+        </div>
+    </div>
+{% endblock %}
